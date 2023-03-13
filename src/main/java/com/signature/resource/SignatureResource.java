@@ -49,4 +49,22 @@ public class SignatureResource {
 		}
 	}
 
+	@PostMapping(value = "/uploadsigned", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<?> uploadSignedFile(@ModelAttribute UploadRequest request) {
+		try {
+			return this.signatureService.uploadSigned(request);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Exception occurred while uploading file", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@GetMapping(value = "/downloadsigned", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<?> downloadSignedFile(@RequestParam String accessCode) {
+		try {
+			return this.signatureService.downloadSigned(accessCode);
+		} catch (Exception e) {
+			return new ResponseEntity<>("Exception occurred while downloading file", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 }

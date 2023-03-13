@@ -21,6 +21,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -167,6 +168,60 @@ public class SignatureServiceImpl implements SignatureService {
 		}
 
 		File file = new File(signature.getPath());
+
+		ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(file.toPath()));
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
+
+		return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength())
+				.contentType(MediaType.APPLICATION_PDF).body(resource);
+	}
+
+	@Override
+	public ResponseEntity<?> uploadSigned(UploadRequest request) throws IOException {
+		MultipartFile file = request.getFile();
+		// Check if the uploaded file is a PDF document
+		if (!file.getContentType().equals(MediaType.APPLICATION_PDF_VALUE)) {
+			return new ResponseEntity<>("Uploaded file is not a PDF document", HttpStatus.BAD_REQUEST);
+		}
+
+		// Generate a unique file name for the uploaded file
+		String fileName = file.getOriginalFilename();
+		String uniqueId = request.getAccessCode();
+		String filePath = uploadDir + File.separator + uniqueId + File.separator + "signed" + File.separator + fileName;
+
+		// Create a directory with the unique ID
+		File directory = new File(uploadDir + File.separator + uniqueId + File.separator + "signed");
+		if (!directory.exists()) {
+			directory.mkdirs();
+		}
+
+		Query query = new Query();
+		query.addCriteria(Criteria.where("accessCode").is(request.getAccessCode()));
+
+		Update update = new Update();
+		update.set("signedPath", filePath);
+		this.mongoTemplate.updateFirst(query, update, Signature.class);
+
+		File uploadedFile = new File(filePath);
+		Files.write(uploadedFile.toPath(), file.getBytes());
+
+		return new ResponseEntity<>("File uploaded successfully", HttpStatus.OK);
+	}
+
+	@Override
+	public ResponseEntity<?> downloadSigned(String accessCode) throws IOException {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("accessCode").is(accessCode));
+		Signature signature = mongoTemplate.findOne(query, Signature.class);
+
+		// Check if the signature exists
+		if (signature == null) {
+			return new ResponseEntity<>("Signature not found with access code: " + accessCode, HttpStatus.NOT_FOUND);
+		}
+
+		File file = new File(signature.getSignedPath());
 
 		ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(file.toPath()));
 

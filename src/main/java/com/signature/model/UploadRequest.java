@@ -8,6 +8,7 @@ public class UploadRequest {
 	private String email;
 	private String message;
 	private String subject;
+	private String accessCode;
 
 	public MultipartFile getFile() {
 		return file;
@@ -47,6 +48,14 @@ public class UploadRequest {
 
 	public void setSubject(String subject) {
 		this.subject = subject;
+	}
+
+	public String getAccessCode() {
+		return accessCode;
+	}
+
+	public void setAccessCode(String accessCode) {
+		this.accessCode = accessCode;
 	}
 
 }

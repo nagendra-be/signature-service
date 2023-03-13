@@ -16,6 +16,7 @@ public class Signature {
 	private String name;
 	private String email;
 	private String path;
+	private String signedPath;
 	private String accessCode;
 	@CreatedDate
 	private Date createdAt;
@@ -76,6 +77,14 @@ public class Signature {
 
 	public void setAccessCode(String accessCode) {
 		this.accessCode = accessCode;
+	}
+
+	public String getSignedPath() {
+		return signedPath;
+	}
+
+	public void setSignedPath(String signedPath) {
+		this.signedPath = signedPath;
 	}
 
 }
