@@ -16,6 +16,7 @@ public class Signature {
 	private String name;
 	private String email;
 	private String path;
+	private String accessCode;
 	@CreatedDate
 	private Date createdAt;
 	@LastModifiedDate
@@ -67,6 +68,14 @@ public class Signature {
 
 	public void setLastModifiedDate(Date lastModifiedDate) {
 		this.lastModifiedDate = lastModifiedDate;
+	}
+
+	public String getAccessCode() {
+		return accessCode;
+	}
+
+	public void setAccessCode(String accessCode) {
+		this.accessCode = accessCode;
 	}
 
 }

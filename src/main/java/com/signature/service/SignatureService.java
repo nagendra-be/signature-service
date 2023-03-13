@@ -12,4 +12,6 @@ public interface SignatureService {
 	ResponseEntity<?> upload(UploadRequest request) throws IOException;
 
 	ResponseEntity<?> getSignatureImage(String name) throws IOException, FontFormatException;
+
+	ResponseEntity<?> download(String accessCode) throws IOException;
 }

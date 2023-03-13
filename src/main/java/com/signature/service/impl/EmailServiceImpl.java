@@ -40,6 +40,22 @@ public class EmailServiceImpl implements EmailService {
 		this.getJavaMailSender().send(preparator);
 	}
 
+	@Override
+	public void sendEmail(String subject, String to, String message) {
+		MimeMessagePreparator preparator = new MimeMessagePreparator() {
+
+			@Override
+			public void prepare(MimeMessage mimeMessage) throws Exception {
+				MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+				helper.setFrom("nagendra_nallamilli@suchiit.com");
+				helper.setTo(to);
+				helper.setSubject(subject);
+				helper.setText(message);
+			}
+		};
+		this.getJavaMailSender().send(preparator);
+	}
+
 	public JavaMailSender getJavaMailSender() {
 		if (this.javaMailSender == null) {
 			JavaMailSenderImpl javaMailSenderImpl = new JavaMailSenderImpl();

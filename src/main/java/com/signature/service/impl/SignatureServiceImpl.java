@@ -14,10 +14,14 @@ import java.util.UUID;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.signature.model.Signature;
 import com.signature.model.UploadRequest;
+import com.signature.service.EmailService;
 import com.signature.service.SignatureService;
 
 @Service
@@ -34,11 +39,17 @@ public class SignatureServiceImpl implements SignatureService {
 	@Autowired
 	private MongoTemplate mongoTemplate;
 
+	@Autowired
+	private EmailService emailService;
+
 	@Value("${upload.path}")
 	private String uploadDir;
 
 	@Value("${font.path}")
 	private String fontPath;
+
+	@Value("${hosts.url}")
+	private String baseUrl;
 
 	@Override
 	public ResponseEntity<?> upload(UploadRequest request) throws IOException {
@@ -46,6 +57,7 @@ public class SignatureServiceImpl implements SignatureService {
 		String name = request.getName();
 		String email = request.getEmail();
 		String message = request.getMessage();
+		String subject = request.getSubject();
 
 		// Check if the uploaded file is a PDF document
 		if (!file.getContentType().equals(MediaType.APPLICATION_PDF_VALUE)) {
@@ -63,18 +75,27 @@ public class SignatureServiceImpl implements SignatureService {
 			directory.mkdirs();
 		}
 
-		// Save the uploaded file to the file system
 		File uploadedFile = new File(filePath);
 		Files.write(uploadedFile.toPath(), file.getBytes());
 
-		// Store the file path in the MongoDB collection
 		Signature signature = new Signature();
 		signature.setName(name);
 		signature.setEmail(email);
 		signature.setPath(filePath);
+		signature.setAccessCode(uniqueId);
 		this.mongoTemplate.save(signature);
 
-		// Return a success response
+		String link = baseUrl + "/" + uniqueId;
+
+		if (StringUtils.isEmpty(subject)) {
+			subject = "Action Required: Sign document: " + fileName;
+		}
+
+		if (StringUtils.isEmpty(message)) {
+			message = "Hi,\n\nPlease sign the document using the link- " + link + "\n\nRegards,\nSuchi IT";
+		}
+		// this.emailService.sendEmail(subject, request.getEmail(), message);
+
 		return new ResponseEntity<>("File uploaded successfully", HttpStatus.OK);
 	}
 
@@ -132,6 +153,28 @@ public class SignatureServiceImpl implements SignatureService {
 		}
 
 		return sb.toString().trim();
+	}
+
+	@Override
+	public ResponseEntity<?> download(String accessCode) throws IOException {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("accessCode").is(accessCode));
+		Signature signature = mongoTemplate.findOne(query, Signature.class);
+
+		// Check if the signature exists
+		if (signature == null) {
+			return new ResponseEntity<>("Signature not found with access code: " + accessCode, HttpStatus.NOT_FOUND);
+		}
+
+		File file = new File(signature.getPath());
+
+		ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(file.toPath()));
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
+
+		return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength())
+				.contentType(MediaType.APPLICATION_PDF).body(resource);
 	}
 
 }
