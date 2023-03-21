@@ -40,7 +40,7 @@ public class SignatureResource {
 		}
 	}
 
-	@GetMapping(value = "/download", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@GetMapping(value = "/download")
 	public ResponseEntity<?> downloadFile(@RequestParam String accessCode) {
 		try {
 			return this.signatureService.download(accessCode);
@@ -59,7 +59,7 @@ public class SignatureResource {
 		}
 	}
 
-	@GetMapping(value = "/downloadsigned", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@GetMapping(value = "/downloadsigned")
 	public ResponseEntity<?> downloadSignedFile(@RequestParam String accessCode) {
 		try {
 			return this.signatureService.downloadSigned(accessCode);
