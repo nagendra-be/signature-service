@@ -22,6 +22,7 @@ public class Signature {
 	private Date createdAt;
 	@LastModifiedDate
 	private Date lastModifiedDate;
+	private String status;
 
 	public String getId() {
 		return id;
@@ -85,6 +86,14 @@ public class Signature {
 
 	public void setSignedPath(String signedPath) {
 		this.signedPath = signedPath;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 
 }

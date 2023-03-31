@@ -67,4 +67,14 @@ public class SignatureResource {
 			return new ResponseEntity<>("Exception occurred while downloading file", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+
+	@GetMapping(value = "/list")
+	public ResponseEntity<?> getallFileDetails() {
+		return this.signatureService.getAllFileDetails();
+	}
+
+	@GetMapping(value = "/approve")
+	public ResponseEntity<?> approveFile(@RequestParam String accessCode, @RequestParam String status) {
+		return this.signatureService.approveFile(accessCode, status);
+	}
 }

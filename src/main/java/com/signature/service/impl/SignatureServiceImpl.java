@@ -10,6 +10,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import javax.imageio.ImageIO;
@@ -27,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.signature.model.Signature;
@@ -84,6 +88,7 @@ public class SignatureServiceImpl implements SignatureService {
 		signature.setEmail(email);
 		signature.setPath(filePath);
 		signature.setAccessCode(uniqueId);
+		signature.setStatus("Mail sent");
 		this.mongoTemplate.save(signature);
 
 		String link = baseUrl + "/" + uniqueId;
@@ -160,7 +165,7 @@ public class SignatureServiceImpl implements SignatureService {
 	public ResponseEntity<?> download(String accessCode) throws IOException {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("accessCode").is(accessCode));
-		Signature signature = mongoTemplate.findOne(query, Signature.class);
+		Signature signature = this.mongoTemplate.findOne(query, Signature.class);
 
 		// Check if the signature exists
 		if (signature == null) {
@@ -202,6 +207,7 @@ public class SignatureServiceImpl implements SignatureService {
 
 		Update update = new Update();
 		update.set("signedPath", filePath);
+		update.set("status", "Signed By User");
 		this.mongoTemplate.updateFirst(query, update, Signature.class);
 
 		File uploadedFile = new File(filePath);
@@ -214,7 +220,7 @@ public class SignatureServiceImpl implements SignatureService {
 	public ResponseEntity<?> downloadSigned(String accessCode) throws IOException {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("accessCode").is(accessCode));
-		Signature signature = mongoTemplate.findOne(query, Signature.class);
+		Signature signature = this.mongoTemplate.findOne(query, Signature.class);
 
 		// Check if the signature exists
 		if (signature == null) {
@@ -230,6 +236,27 @@ public class SignatureServiceImpl implements SignatureService {
 
 		return ResponseEntity.ok().headers(headers).contentLength(resource.contentLength())
 				.contentType(MediaType.APPLICATION_PDF).body(resource);
+	}
+
+	@Override
+	public ResponseEntity<?> getAllFileDetails() {
+		Query query = new Query();
+		List<Signature> signatureList = this.mongoTemplate.find(query, Signature.class);
+		if (CollectionUtils.isEmpty(signatureList)) {
+			return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
+		}
+		return new ResponseEntity<>(signatureList, HttpStatus.OK);
+	}
+
+	@Override
+	public ResponseEntity<?> approveFile(String accessCode, String status) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("accessCode").is(accessCode));
+
+		Update update = new Update();
+		update.set("status", status);
+		this.mongoTemplate.updateFirst(query, update, Signature.class);
+		return new ResponseEntity<>("Updated status successfully", HttpStatus.OK);
 	}
 
 }

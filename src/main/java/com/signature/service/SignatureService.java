@@ -18,4 +18,8 @@ public interface SignatureService {
 	ResponseEntity<?> uploadSigned(UploadRequest request) throws IOException;
 	
 	ResponseEntity<?> downloadSigned(String accessCode) throws IOException;
+
+	ResponseEntity<?> getAllFileDetails();
+
+	ResponseEntity<?> approveFile(String accessCode, String status);
 }
